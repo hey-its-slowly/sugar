@@ -1,6 +1,9 @@
 use std::str::FromStr;
-
-use anchor_client::solana_sdk::pubkey::Pubkey;
+use anchor_client::solana_sdk::{
+    pubkey::Pubkey,
+    compute_budget::ComputeBudgetInstruction,
+    instruction::Instruction
+};
 use anyhow::Result;
 use console::style;
 use mpl_candy_guard::{
@@ -92,8 +95,15 @@ pub fn process_guard_add(args: GuardAddArgs) -> Result<()> {
         let mut serialized_data = vec![0; data.size()];
         data.save(&mut serialized_data)?;
 
+        let modify_compute_units = ComputeBudgetInstruction::set_compute_unit_limit(1000000);
+        let add_priority_fee = ComputeBudgetInstruction::set_compute_unit_price(50000);
+        let modify_compute_units_instruction: Instruction = modify_compute_units.into();
+        let add_priority_fee_instruction: Instruction = add_priority_fee.into();
+
         let tx = program
             .request()
+            .instruction(modify_compute_units_instruction)
+            .instruction(add_priority_fee_instruction)
             .accounts(InitializeAccount {
                 candy_guard,
                 base: base.pubkey(),
@@ -139,9 +149,16 @@ pub fn process_guard_add(args: GuardAddArgs) -> Result<()> {
         let mut serialized_data = vec![0; data.size()];
         data.save(&mut serialized_data)?;
 
+        let modify_compute_units = ComputeBudgetInstruction::set_compute_unit_limit(1000000);
+        let add_priority_fee = ComputeBudgetInstruction::set_compute_unit_price(50000);
+        let modify_compute_units_instruction: Instruction = modify_compute_units.into();
+        let add_priority_fee_instruction: Instruction = add_priority_fee.into();
+
         // synchronizes the guards config with the on-chain account
         let tx = program
             .request()
+            .instruction(modify_compute_units_instruction)
+            .instruction(add_priority_fee_instruction)
             .accounts(UpdateAccount {
                 candy_guard: candy_guard_id,
                 authority: payer.pubkey(),
